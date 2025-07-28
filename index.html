@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Site-9512 Command Terminal & Interactive Tasks</title>
+<style>
+  body {
+    font-family: monospace;
+    background: #0b0b0b;
+    color: #00ff99;
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+  }
+  input, select, button {
+    background: #111;
+    border: 1px solid #00ff99;
+    color: #00ff99;
+    font-size: 16px;
+    padding: 10px;
+    margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #00ff99;
+    color: black;
+  }
+  .hidden {
+    display: none;
+  }
+  #logBox {
+    background: #111;
+    height: 200px;
+    overflow-y: auto;
+    padding: 10px;
+    margin-top: 15px;
+    border: 1px solid #00ff99;
+    white-space: pre-wrap;
+  }
+  #alertBox {
+    background: #111;
+    border: 2px solid #00ff99;
+    padding: 15px;
+    margin-top: 20px;
+  }
+  .choice-btn {
+    background-color: #222;
+    border: 2px solid #0f0;
+    color: #0f0;
+    padding: 12px;
+    margin: 8px 0;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .choice-btn:hover {
+    background-color: #0f0;
+    color: #000;
+  }
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h1>Site-9512 Command Access</h1>
+  <label for="agentName">Enter Agent Name:</label>
+  <input type="text" id="agentName" placeholder="Agent e.g., Chappelo" />
+  <button onclick="login()">Access Terminal</button>
+</div>
+
+<div id="dashboard" class="hidden">
+  <h2>Welcome, <span id="agentDisplay"></span></h2>
+  <p>Status: Active | Rank: Level 1</p>
+  
+  <p id="status">Status: Waiting for action...</p>
+
+  <h3>Select SCP (for info or personal choice)</h3>
+  <select id="scpSelect">
+    <option value="SCP-173">SCP-173 - The Sculpture</option>
+    <option value="SCP-096">SCP-096 - The Shy Guy</option>
+    <option value="SCP-049">SCP-049 - The Plague Doctor</option>
+    <option value="SCP-682">SCP-682 - Hard-to-Destroy Reptile</option>
+    <option value="SCP-035">SCP-035 - The Possessive Mask</option>
+    <option value="SCP-055">SCP-055 - Unknown</option>
+    <option value="SCP-093">SCP-093 - Red Sea Object</option>
+    <option value="SCP-1471">SCP-1471 - MalO ver1.0.0</option>
+    <option value="SCP-106">SCP-106 - The Old Man</option>
+    <option value="SCP-008">SCP-008 - Zombie Plague</option>
+    <option value="SCP-999">SCP-999 - The Tickle Monster</option>
+    <option value="SCP-079">SCP-079 - Old AI</option>
+    <option value="SCP-1048">SCP-1048 - Builder Bear</option>
+    <option value="SCP-1782">SCP-1782 - Taboo Tapes</option>
+    <option value="SCP-131">SCP-131 - The Eye Pods</option>
+    <option value="SCP-294">SCP-294 - The Coffee Machine</option>
+    <option value="SCP-963">SCP-963 - Immortality Mask</option>
+    <option value="SCP-147">SCP-147 - The Old Lighthouse</option>
+    <option value="SCP-343">SCP-343 - God</option>
+    <option value="SCP-914">SCP-914 - The Clockworks</option>
+    <option value="SCP-261">SCP-261 - The Vending Machine</option>
+    <option value="SCP-1312">SCP-1312 - The Snowman</option>
+    <option value="SCP-1230">SCP-1230 - The Encyclopedia of Absolute Truth</option>
+  </select>
+
+  <button id="triggerBreachBtn" onclick="triggerBreach()"⚠️ Trigger Breach</button>
+  <button id="triggerJobBtn" onclick="triggerJob()">🛠️ New Job</button>
+
+  <div id="alertBox"></div>
+
+  <div id="choicesContainer"></div>
+
+  <h3>Action Log</h3>
+  <div id="logBox">[System Ready...]</div>
+</div>
+
+<script>
+  let currentSCP = null;
+  let breachActive = false;
+  let jobActive = false;
+
+  const scpList = [
+    "SCP-173", "SCP-096", "SCP-049", "SCP-682", "SCP-035",
+    "SCP-055", "SCP-093", "SCP-1471", "SCP-106", "SCP-008",
+    "SCP-999", "SCP-079", "SCP-1048", "SCP-1782", "SCP-131",
+    "SCP-294", "SCP-963", "SCP-147", "SCP-343", "SCP-914",
+    "SCP-261", "SCP-1312", "SCP-1230"
+  ];
+
+  const breachMessages = [
+    "has escaped containment!",
+    "is causing severe disturbances in the facility!",
+    "has breached security protocols!",
+    "is loose in the facility! Immediate action required!"
+  ];
+
+  const jobs = [
+    {
+      text: "Clean the containment chamber",
+      choices: [
+        { text: "Use standard cleaning protocol", outcome: "success", log: "Used standard cleaning. Chamber spotless." },
+        { text: "Skip some steps to save time", outcome: "fail", log: "Rushed cleaning caused minor contamination." },
+        { text: "Call maintenance team", outcome: "success", log: "Maintenance team handled cleaning perfectly." }
+      ]
+    },
+    {
+      text: "Monitor SCP behavioral logs",
+      choices: [
+        { text: "Run full analysis", outcome: "success", log: "Behavioral analysis complete. No anomalies detected." },
+        { text: "Only skim reports", outcome: "fail", log: "Missed crucial anomaly in logs." },
+        { text: "Request AI assistance", outcome: "success", log: "AI assistance improved data accuracy." }
+      ]
+    },
+    {
+      text: "Assist Dr. Chappelo with lab tests",
+      choices: [
+        { text: "Follow precise instructions", outcome: "success", log: "Lab tests successful and recorded." },
+        { text: "Experiment without guidance", outcome: "fail", log: "Experiment failed, caused minor lab damage." },
+        { text: "Consult with colleagues", outcome: "success", log: "Collaborative effort improved results." }
+      ]
+    },
+    {
+      text: "Perform security patrol around containment wing",
+      choices: [
+        { text: "Patrol carefully and report", outcome: "success", log: "Patrol completed. All secure." },
+        { text: "Patrol quickly", outcome: "fail", log: "Missed suspicious activity." },
+        { text: "Request drone support", outcome: "success", log: "Drones provided excellent coverage." }
+      ]
+    },
+    {
+      text: "Check environmental controls for containment areas",
+      choices: [
+        { text: "Run full diagnostic", outcome: "success", log: "Environmental systems functioning normally." },
+        { text: "Only check critical systems", outcome: "fail", log: "Overlooked failing subsystem." },
+        { text: "Schedule maintenance", outcome: "success", log: "Maintenance scheduled proactively." }
+      ]
+    },
+    {
+      text: "Calibrate monitoring sensors",
+      choices: [
+        { text: "Use automated calibration", outcome: "success", log: "Sensors calibrated with precision." },
+        { text: "Calibrate manually", outcome: "fail", log: "Manual calibration caused sensor misalignment." },
+        { text: "Schedule professional check", outcome: "success", log: "Professional technician recalibrated sensors." }
+      ]
+    },
+    {
+      text: "Test emergency lockdown systems",
+      choices: [
+        { text: "Run full system check", outcome: "success", log: "Lockdown systems fully operational." },
+        { text: "Skip minor alerts", outcome: "fail", log: "Skipped alerts led to system faults." },
+        { text: "Report to security chief", outcome: "success", log: "Security chief updated and systems fine." }
+      ]
+    },
+    {
+      text: "Restock medical supplies",
+      choices: [
+        { text: "Use authorized supplier", outcome: "success", log: "Medical supplies restocked securely." },
+        { text: "Order from unknown source", outcome: "fail", log: "Supplies contaminated; rejected." },
+        { text: "Audit current inventory", outcome: "success", log: "Inventory audit complete and accurate." }
+      ]
+    },
+    {
+      text: "Calm agitated SCP",
+      choices: [
+        { text: "Use approved sedation", outcome: "success", log: "SCP calmed successfully." },
+        { text: "Attempt manual restraint", outcome: "fail", log: "Restraint failed; SCP agitated more." },
+        { text: "Alert containment team", outcome: "success", log: "Containment team pacified SCP." }
+      ]
+    },
+    {
+      text: "Run containment chamber power diagnostics",
+      choices: [
+        { text: "Check all power systems", outcome: "success", log: "Power systems nominal." },
+        { text: "Ignore minor fluctuations", outcome: "fail", log: "Power fluctuations caused temporary blackout." },
+        { text: "Schedule emergency maintenance", outcome: "success", log: "Emergency maintenance prevented failure." }
+      ]
+    }
+  ];
+
+  function login() {
+    const nameInput = document.getElementById("agentName");
+    const name = nameInput.value.trim();
+    if (!name) {
+      alert("Please enter your agent name.");
+      return;
+    }
+    document.getElementById("agentDisplay").textContent = name;
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+    logAction(`Agent ${name} has logged in.`);
+  }
+
+  function getRandomSCP() {
+    return scpList[Math.floor(Math.random() * scpList.length)];
+  }
+
+  function getRandomBreachMessage() {
+    return breachMessages[Math.floor(Math.random() * breachMessages.length)];
+  }
+
+  function triggerBreach() {
+    if (breachActive || jobActive) {
+      alert("Resolve current alert before triggering another.");
+      return;
+    }
+    currentSCP = getRandomSCP();
+    breachActive = true;
+    const breachMsg = getRandomBreachMessage();
+    updateAlertBox(`⚠️ BREACH ALERT: ${currentSCP} ${breachMsg}`);
+    showChoices([
+      { text: "Contain SCP", handler: handleContainment },
+      { text: "Execute SCP", handler: handleExecution }
+    ]);
+    logAction(`BREACH: ${currentSCP} ${breachMsg}`);
+    updateStatus(`BREACH ALERT for ${currentSCP}! Choose containment or execution.`);
+  }
+
+  function handleContainment() {
+    const success = Math.random() < 0.5;
+    if (success) {
+      updateStatus(`✅ SUCCESS: ${currentSCP} recontained successfully.`);
+      logAction(`Agent contained ${currentSCP} without casualties.`);
+    } else {
+      updateStatus(`☠️ FAILURE: ${currentSCP} containment attempt failed.`);
+      logAction(`Agent failed to contain ${currentSCP}.`);
+    }
+    clearAlert();
+  }
+
+  function handleExecution() {
+    const success = Math.random() < 0.5;
+    if (success) {
+      updateStatus(`✅ SUCCESS: ${currentSCP} terminated successfully.`);
+      logAction(`Agent executed ${currentSCP} after breach.`);
+    } else {
+      updateStatus(`☠️ FAILURE: Execution of ${currentSCP} failed! SCP still loose.`);
+      logAction(`Agent failed to terminate ${currentSCP}.`);
+    }
+    clearAlert();
+  }
+
+  function triggerJob() {
+    if (breachActive || jobActive) {
+      alert("Resolve current alert before triggering another.");
+      return;
+    }
+    jobActive = true;
+    currentSCP = getRandomSCP();
+    const job = jobs[Math.floor(Math.random() * jobs.length)];
+    updateAlertBox(`🛠️ NEW JOB: ${job.text} for ${currentSCP}`);
+    const choices = job.choices.map(choice => ({
+      text: choice.text,
+      handler: () => handleJobChoice(choice)
+    }));
+    showChoices(choices);
+    logAction(`JOB: Assigned task "${job.text}" for ${currentSCP}.`);
+    updateStatus(`New job for ${currentSCP}: ${job.text}. Choose how to proceed.`);
+  }
+
+  function handleJobChoice(choice) {
+    if (!jobActive) return;
+    if (choice.outcome === "success") {
+      updateStatus(`✅ Job Success: ${choice.log}`);
+    } else {
+      updateStatus(`⚠️ Job Issue: ${choice.log}`);
+    }
+    logAction(`Agent job outcome: ${choice.log}`);
+    clearAlert();
+  }
+
+  function updateAlertBox(html) {
+    document.getElementById("alertBox").innerHTML = `<p>${html}</p>`;
+  }
+
+  function showChoices(choices) {
+    const container = document.getElementById("choicesContainer");
+    container.innerHTML = "";
+    choices.forEach(choice => {
+      const btn = document.createElement("button");
+      btn.textContent = choice.text;
+      btn.className = "choice-btn";
+      btn.onclick = () => {
+        choice.handler();
+        container.innerHTML = "";
+      };
+      container.appendChild(btn);
+    });
+  }
+
+  function clearAlert() {
+    breachActive = false;
+    jobActive = false;
+    currentSCP = null;
+    document.getElementById("alertBox").innerHTML = "";
+    document.getElementById("choicesContainer").innerHTML = "";
+  }
+
+  function updateStatus(msg) {
+    document.getElementById("status").innerText = `Status: ${msg}`;
+  }
+
+  function logAction(msg) {
+    const logBox = document.getElementById("logBox");
+    const time = new Date().toLocaleTimeString();
+    logBox.textContent += `\n[${time}] ${msg}`;
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+</script>
+
+</body>
+</html>
